@@ -20,14 +20,25 @@ public class CameraMovement : MonoBehaviour
     [SerializeField]
     private Vector2 targetCharacterDirection;
 
+    private Quaternion initialRotation;
+
+    public float rotationAmount = 4f;
+    public float maxRotationAmount = 5f;
+    public bool rotationX = true;
+    public bool rotationY = true;
+    public bool rotationZ = true;
+
     void Start()
     {
         // Set target direction to the camera's initial orientation.
         targetDirection = transform.localRotation.eulerAngles;
+        initialRotation = transform.localRotation;
 
         // Set target direction for the character body to its inital state.
         if (characterBody)
             targetCharacterDirection = characterBody.transform.localRotation.eulerAngles;
+
+
     }
 
     void Update()
@@ -70,6 +81,9 @@ public class CameraMovement : MonoBehaviour
             var yRotation = Quaternion.AngleAxis(_mouseAbsolute.x, transform.InverseTransformDirection(Vector3.up));
             transform.localRotation *= yRotation;
         }
+
+        Tilt();
+
     }
 
     public void AddRecoil(Vector3 recoil, float time)
@@ -85,5 +99,15 @@ public class CameraMovement : MonoBehaviour
                 yield return null;
             }
         }
+    }
+
+    private void Tilt()
+    {
+        float tiltX = Mathf.Clamp(_smoothMouse.x * rotationAmount, -maxRotationAmount, maxRotationAmount);
+        float tiltY = Mathf.Clamp(_smoothMouse.y * rotationAmount, -maxRotationAmount, maxRotationAmount);
+
+        Quaternion finalRotation = Quaternion.Euler(new Vector3(rotationX ? -tiltX : 0f, rotationY ? tiltY : 0f, rotationZ ? tiltY : 0f));
+
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, finalRotation * initialRotation, Time.deltaTime * smoothing.x);
     }
 }
